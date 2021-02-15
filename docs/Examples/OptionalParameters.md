@@ -1,25 +1,24 @@
-Optional request parameters
-===========================
+# Optional request parameters
 
 Suppose you want to call `api/users?limit=10` but also `api/users`:
 
 ```swift
 public enum MyService {
-	case Users(limit: Int?)
+    case users(limit: Int?)
 }
 
 extension MyService: TargetType {
 //...
-	public var parameters: [String: AnyObject]? {
-	        switch self {
-	        case .Users(let limit):
-	            var params: [String : AnyObject] = [:]
-				params["limit"] = limit
-	            return params
-	        default:
-	            return nil
-	        }
-	    }
+    public var task: Task {
+        switch self {
+        case .users(let limit):
+            var params: [String: Any] = [:]
+            params["limit"] = limit
+            return .requestParameters(parameters: params, encoding: URLEncoding.default)
+        default:
+            return .requestPlain
+        }
+    }
 //...
 }
 ```
@@ -33,12 +32,33 @@ extension MyService: TargetType {
 //...
     public var method: Moya.Method {
         switch self {
-        case .EmailAuth:
-            return .POST
+        case .emailAuth:
+            return .post
         default:
-            return .GET
+            return .get
         }
     }
 //...
 }
 ```
+
+## Important Note
+
+You **have to** add optional parameters like shown above, one per line. Optional parameters won't be removed in case of ```nil``` if you try to initialize them within one line, e.g.:
+
+```swift
+//...
+	// This won't work!
+	public var parameters: [String: Any]? {
+	    switch self {
+	    case .users(let limit):
+	        let params: [String: Any] = ["limit": limit]
+	        return .requestParameters(parameters: params, encoding: URLEncoding.default)
+        default:
+            return .requestPlain
+        }
+    }
+//...
+```
+
+In this case the URL request would contain a parameter like ```api/users?limit=nil``` if limit is ```nil```.
